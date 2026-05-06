@@ -4,19 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - VideoPay</title>
-    <!-- Agrega los estilos de FirebaseUI y los tuyos propios -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0f172a; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif;
-            padding: 24px;
-        }
+        body { background: #0f172a; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; padding: 24px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .login-box { max-width: 400px; margin: 100px auto; background: #1e293b; padding: 32px; border-radius: 24px; text-align: center; }
-        input, button {
-            width: 100%; padding: 12px; margin-top: 12px; border-radius: 12px; border: none;
-            font-size: 16px;
-        }
+        input, button { width: 100%; padding: 12px; margin-top: 12px; border-radius: 12px; border: none; font-size: 16px; }
         input { background: #0f172a; color: white; }
         button { background: #3b82f6; color: white; font-weight: bold; cursor: pointer; }
         button:hover { background: #2563eb; }
@@ -35,15 +28,12 @@
     </style>
 </head>
 <body>
-    <div class="container" id="app">
-        <!-- Aquí se mostrará el login o el dashboard -->
-    </div>
+    <div class="container" id="app"></div>
 
     <script type="module">
-        // 1. CONFIGURACIÓN DE FIREBASE (USA LA MISMA QUE EN TU APP)
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyCiN9CscYBtqJcdoh33RUMV_mamld1he8I",
@@ -59,13 +49,12 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // --- CREDENCIALES DEL ADMIN (CÁMBIALAS) ---
+        // --- CREDENCIALES DEL ADMIN ---
         const ADMIN_EMAIL = "admin@videopay.com";
         const ADMIN_PASSWORD = "Admin123!";
 
         const appDiv = document.getElementById('app');
 
-        // Función para mostrar el login
         function showLogin() {
             appDiv.innerHTML = `
                 <div class="login-box">
@@ -81,14 +70,12 @@
                 const password = document.getElementById('password').value;
                 try {
                     await signInWithEmailAndPassword(auth, email, password);
-                    // El onAuthStateChanged se encargará de cambiar la vista
                 } catch (error) {
                     document.getElementById('errorMsg').innerText = "Error: Credenciales incorrectas.";
                 }
             });
         }
 
-        // Función para mostrar el dashboard
         async function showDashboard(user) {
             appDiv.innerHTML = `
                 <div class="dashboard-header">
@@ -98,23 +85,18 @@
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card"><div class="stat-number" id="totalUsers">0</div><div>Usuarios Registrados</div></div>
                     <div class="stat-card"><div class="stat-number" id="totalVideos">0</div><div>Videos Subidos</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalMB">0</div><div>Megas Totales</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalMB">0.00</div><div>Megas Totales</div></div>
                     <div class="stat-card"><div class="stat-number" id="totalEarnings">RD$0</div><div>Ganancias Generadas</div></div>
                 </div>
                 <div class="user-table">
                     <table>
-                        <thead>
-                            <tr><th>Usuario</th><th>Email</th><th>Videos</th><th>Megas</th><th>Ganancias</th></tr>
-                        </thead>
-                        <tbody id="usersTableBody">
-                            <tr><td colspan="5">Cargando usuarios...</td></tr>
-                        </tbody>
+                        <thead><tr><th>Usuario</th><th>Email</th><th>Videos</th><th>Megas</th><th>Ganancias</th></tr></thead>
+                        <tbody id="usersTableBody"><tr><td colspan="5">Cargando usuarios...</td></tr></tbody>
                     </table>
                 </div>
             `;
-
             document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
-            await loadAdminData(); // Función para cargar todos los datos
+            await loadAdminData();
         }
 
         async function loadAdminData() {
@@ -123,7 +105,7 @@
             
             let totalUsers = 0, totalVideos = 0, totalMB = 0, totalEarnings = 0;
             const tableBody = document.getElementById('usersTableBody');
-            tableBody.innerHTML = ''; // Limpiar tabla
+            tableBody.innerHTML = '';
 
             for (const userDoc of usersSnapshot.docs) {
                 totalUsers++;
@@ -143,7 +125,6 @@
                 totalMB += userMB;
                 totalEarnings += userEarnings;
 
-                // Añadir fila a la tabla
                 const row = tableBody.insertRow();
                 row.innerHTML = `
                     <td><div style="display:flex; align-items:center; gap:8px"><img src="${userData.photo || ''}" class="user-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${userData.name}'"> ${userData.name || 'N/A'}</div></td>
@@ -154,25 +135,19 @@
                 `;
             }
 
-            // Actualizar estadísticas generales
             document.getElementById('totalUsers').innerText = totalUsers;
             document.getElementById('totalVideos').innerText = totalVideos;
             document.getElementById('totalMB').innerText = totalMB.toFixed(2);
             document.getElementById('totalEarnings').innerText = 'RD$ ' + totalEarnings.toFixed(2);
         }
 
-        // --- VERIFICAR ESTADO DE AUTENTICACIÓN ---
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Si el usuario logueado es el admin, muestra el dashboard
-                if (user.email === ADMIN_EMAIL) {
-                    await showDashboard(user);
-                } else {
-                    // Si no es el admin, cerrar sesión y mostrar login
-                    await signOut(auth);
-                    showLogin();
-                    alert("Acceso no autorizado.");
-                }
+            if (user && user.email === ADMIN_EMAIL) {
+                await showDashboard(user);
+            } else if (user && user.email !== ADMIN_EMAIL) {
+                await signOut(auth);
+                showLogin();
+                alert("Acceso no autorizado.");
             } else {
                 showLogin();
             }
