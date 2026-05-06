@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>VideoPay - Inicio</title>
     
-    <!-- Firebase SDKs versión estable -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     
@@ -362,7 +362,7 @@
                 errorBox.style.display = 'block';
                 
                 if (error.code === 'auth/network-request-failed') {
-                    errorBox.innerHTML = '❌ Error de red. Verifica tu conexión a Internet.<br><br>🔧 En AppCreator24, asegúrate de haber agregado el dominio en Firebase Console → Authentication → Authorized domains.<br><br>📱 Si estás probando en un emulador, intenta reiniciar la app.';
+                    errorBox.innerHTML = '❌ Error de red. Verifica tu conexión a Internet.<br><br>🔧 Agrega este dominio a Firebase Console → Authentication → Authorized domains:<br><br><strong>' + window.location.hostname + '</strong>';
                 } else if (error.code === 'auth/unauthorized-domain') {
                     errorBox.innerHTML = '❌ Dominio no autorizado. Agrega este dominio en Firebase Console:<br><br><strong>' + window.location.hostname + '</strong>';
                 } else if (error.code === 'auth/popup-blocked') {
