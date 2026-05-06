@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>VideoPay - Inicio</title>
+    
+    <!-- Firebase SDKs versión estable -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(145deg, #0b0f18 0%, #0a0e17 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #f1f5f9;
+            min-height: 100vh;
+            padding: 16px;
+            padding-bottom: 80px;
+        }
+        .wallet-header {
+            background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .balance-area h2 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 4px; }
+        .balance-number { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #FFFFFF, #94a3b8); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1; }
+        .balance-number small { font-size: 14px; font-weight: 500; color: #64748b; }
+        .min-withdraw { background: #1e293b; padding: 6px 12px; border-radius: 40px; font-size: 11px; color: #facc15; }
+        .withdraw-btn { background: linear-gradient(95deg, #10b981, #059669); border: none; padding: 10px 20px; border-radius: 40px; font-weight: 700; font-size: 14px; color: white; cursor: pointer; }
+        
+        .auth-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .auth-card {
+            background: #11161f;
+            border-radius: 32px;
+            padding: 40px 32px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid #1e2a3a;
+        }
+        .auth-title { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+        .auth-subtitle { color: #94a3b8; margin-bottom: 32px; font-size: 14px; }
+        .google-btn {
+            background: #fff;
+            color: #333;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        .google-btn:hover { transform: scale(1.02); }
+        .google-btn img { width: 22px; height: 22px; }
+        
+        .loading-message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #1e293b;
+            border-top-color: #facc15;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { color: #facc15; margin-top: 16px; font-size: 14px; }
+        
+        .user-info {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: #1e293b;
+            padding: 8px 16px;
+            border-radius: 60px;
+        }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .user-details { text-align: right; }
+        .user-name { font-weight: 600; font-size: 14px; }
+        .user-email { font-size: 11px; color: #94a3b8; }
+        .logout-icon {
+            background: none;
+            border: none;
+            color: #f87171;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .stats-grid { display: flex; gap: 12px; margin-top: 20px; }
+        .stat-card { background: #0a0e16; border-radius: 20px; padding: 12px; flex: 1; text-align: center; }
+        .stat-label { font-size: 11px; color: #8ba0bc; }
+        .stat-value { font-size: 22px; font-weight: 700; color: #facc15; }
+        
+        .bottom-menu {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0f172ae6;
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 16px 20px;
+            border-top: 0.5px solid #334155;
+            z-index: 100;
+        }
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 40px;
+        }
+        .menu-item.active { color: #facc15; background: #facc1520; }
+        .menu-icon { font-size: 24px; }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-content {
+            background: #111827;
+            border-radius: 32px;
+            max-width: 350px;
+            width: 90%;
+            padding: 24px;
+            position: relative;
+        }
+        .close-modal-btn {
+            position: absolute;
+            top: 12px; right: 16px;
+            background: none; border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            border-radius: 16px;
+        }
+        .dropdown-item:hover { background: #1e293b; color: #facc15; }
+        
+        .error-box {
+            background: #451a1a;
+            border-left: 3px solid #ef4444;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-top: 16px;
+            color: #fca5a5;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wallet-header">
+    <div class="balance-area">
+        <h2>💰 SALDO TOTAL</h2>
+        <div class="balance-number">RD$<span id="totalBalance">0</span><small> DOP</small></div>
+        <div class="min-withdraw">🔒 Mínimo retiro: RD$1,000</div>
+    </div>
+    <div id="userInfo" class="user-info">
+        <img id="userAvatar" class="user-avatar" src="">
+        <div class="user-details">
+            <div id="userName" class="user-name"></div>
+            <div id="userEmail" class="user-email"></div>
+        </div>
+        <button id="logoutBtn" class="logout-icon" title="Cerrar sesión">🚪</button>
+    </div>
+    <button id="withdrawBtn" class="withdraw-btn">💸 RETIRAR</button>
+</div>
+
+<div id="loadingMessage" class="loading-message">
+    <div style="text-align: center;">
+        <div class="spinner"></div>
+        <div class="loading-text">Conectando con Google...</div>
+    </div>
+</div>
+
+<div id="authSection" class="auth-section">
+    <div class="auth-card">
+        <div style="font-size: 64px; margin-bottom: 16px;">📹</div>
+        <h2 class="auth-title">VideoPay RD</h2>
+        <p class="auth-subtitle">Gana dinero por cada mega de video que publiques</p>
+        <button id="loginBtn" class="google-btn">
+            <img src="https://www.google.com/favicon.ico" alt="Google"> Iniciar sesión con Google
+        </button>
+        <div id="errorBox" class="error-box"></div>
+    </div>
+</div>
+
+<div id="mainContent" style="display: none;">
+    <div style="text-align: center; padding: 20px 0 30px;">
+        <div style="font-size: 64px; margin-bottom: 16px;">📹</div>
+        <h2 style="font-size: 24px; margin-bottom: 8px;">VideoPay RD</h2>
+        <p style="color: #94a3b8; margin-bottom: 24px;">Gana pesos dominicanos por cada mega de video que publiques</p>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">📼 Videos</div><div class="stat-value" id="videosCount">0</div></div>
+            <div class="stat-card"><div class="stat-label">📀 Megas</div><div class="stat-value" id="megasCount">0</div></div>
+            <div class="stat-card"><div class="stat-label">💰 Ganancias</div><div class="stat-value" id="earningsCount">RD$0</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-menu">
+    <button class="menu-item active" onclick="location.href='go:inicio'"><span class="menu-icon">🏠</span><span>Inicio</span></button>
+    <button class="menu-item" onclick="location.href='go:precios'"><span class="menu-icon">💰</span><span>Precios</span></button>
+    <button class="menu-item" onclick="location.href='go:subir'"><span class="menu-icon">📤</span><span>Subir</span></button>
+    <button class="menu-item" onclick="location.href='go:videos'"><span class="menu-icon">📼</span><span>Mis Videos</span></button>
+    <button class="menu-item" onclick="location.href='go:perfil'"><span class="menu-icon">👤</span><span>Perfil</span></button>
+    <button class="menu-item" id="legalBtn"><span class="menu-icon">⚖️</span><span>Legal</span></button>
+</div>
+
+<div id="legalModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-modal-btn" id="closeLegalModal">✕</button>
+        <h4 style="margin-bottom: 16px; color:#facc15;">📋 Información Legal</h4>
+        <button class="dropdown-item" data-page="terms">📜 Términos y Condiciones</button>
+        <button class="dropdown-item" data-page="policies">🔒 Políticas de Privacidad</button>
+        <button class="dropdown-item" data-page="about">👥 Sobre Nosotros</button>
+        <button class="dropdown-item" data-page="share">📲 Compartir App</button>
+        <button class="dropdown-item" data-page="paypal">💳 Retiro vía PayPal</button>
+    </div>
+</div>
+
+<div id="infoModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-modal-btn" id="closeInfoModal">✕</button>
+        <h4 id="infoTitle" style="margin-bottom: 16px; color:#facc15;">Título</h4>
+        <div id="infoContent" style="font-size: 13px; line-height: 1.5; color: #cbd5e1; margin-bottom: 20px;"></div>
+        <button id="closeInfoBtn" style="background:#475569; width:100%; padding:12px; border:none; border-radius:40px; color:white; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    // Configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCiN9CscYBtqJcdoh33RUMV_mamld1he8I",
+        authDomain: "videopay-c9d54.firebaseapp.com",
+        projectId: "videopay-c9d54",
+        storageBucket: "videopay-c9d54.firebasestorage.app",
+        messagingSenderId: "356964325923",
+        appId: "1:356964325923:web:5364b2151d2e9e8a46af96",
+        measurementId: "G-WB53DC82H7"
+    };
+    
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    // Elementos
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userInfo = document.getElementById('userInfo');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    const authSection = document.getElementById('authSection');
+    const mainContent = document.getElementById('mainContent');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const errorBox = document.getElementById('errorBox');
+    
+    function updateUI(user) {
+        if (user) {
+            authSection.style.display = 'none';
+            mainContent.style.display = 'block';
+            userInfo.style.display = 'flex';
+            userAvatar.src = user.photoURL || 'https://ui-avatars.com/api/?background=facc15&color=fff&name=' + encodeURIComponent(user.displayName || 'Usuario');
+            userName.innerText = user.displayName || 'Usuario';
+            userEmail.innerText = user.email;
+            
+            localStorage.setItem('videopay_user', JSON.stringify({
+                uid: user.uid,
+                name: user.displayName,
+                email: user.email,
+                photo: user.photoURL
+            }));
+            
+            loadingMessage.style.display = 'none';
+        } else {
+            authSection.style.display = 'flex';
+            mainContent.style.display = 'none';
+            userInfo.style.display = 'none';
+            localStorage.removeItem('videopay_user');
+            loadingMessage.style.display = 'none';
+        }
+    }
+    
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async () => {
+            try {
+                loadingMessage.style.display = 'block';
+                errorBox.style.display = 'none';
+                const result = await auth.signInWithPopup(provider);
+                updateUI(result.user);
+                alert('✅ ¡Bienvenido ' + result.user.displayName + '!');
+            } catch (error) {
+                console.error('Error:', error);
+                loadingMessage.style.display = 'none';
+                errorBox.style.display = 'block';
+                
+                if (error.code === 'auth/network-request-failed') {
+                    errorBox.innerHTML = '❌ Error de red. Verifica tu conexión a Internet.<br><br>🔧 En AppCreator24, asegúrate de haber agregado el dominio en Firebase Console → Authentication → Authorized domains.<br><br>📱 Si estás probando en un emulador, intenta reiniciar la app.';
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    errorBox.innerHTML = '❌ Dominio no autorizado. Agrega este dominio en Firebase Console:<br><br><strong>' + window.location.hostname + '</strong>';
+                } else if (error.code === 'auth/popup-blocked') {
+                    errorBox.innerHTML = '❌ El navegador bloqueó la ventana emergente. Permite las ventanas emergentes para este sitio.';
+                } else {
+                    errorBox.innerHTML = '❌ Error: ' + error.message;
+                }
+            }
+        });
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await auth.signOut();
+            updateUI(null);
+            alert('✅ Sesión cerrada');
+        });
+    }
+    
+    auth.onAuthStateChanged((user) => {
+        updateUI(user);
+    });
+    
+    // Funciones adicionales
+    const infoContents = {
+        terms: `<strong>📜 Términos y Condiciones</strong><br><br>Al usar VideoPay RD aceptas que los pagos son procesados según el plan activo. El retiro mínimo es de RD$1,000.`,
+        policies: `<strong>🔒 Políticas de Privacidad</strong><br><br>Tus datos personales son tratados con confidencialidad. No compartimos tu información con terceros.`,
+        about: `<strong>👥 Sobre Nosotros</strong><br><br>VideoPay RD - República Dominicana<br>📧 soporte@videopayrd.com`,
+        share: `<strong>📲 Compartir App</strong><br><br><div style="background:#0a0e16; padding:10px; border-radius:12px;">https://videopayrd.com/app</div><br><button id="copyLinkBtn" style="background:#3b82f6; border:none; padding:10px; border-radius:30px; color:white; width:100%;">📋 Copiar</button>`,
+        paypal: `<strong>💳 Retiro PayPal</strong><br><br>Mínimo RD$1,000. Transferencia 24-48h.`
+    };
+
+    function getPlanPrice() {
+        let planId = localStorage.getItem('videopay_plan') || 'plus';
+        const prices = { basico: 0.35, plus: 0.55, premium: 0.88 };
+        return prices[planId] || 0.55;
+    }
+
+    function updateData() {
+        let data = localStorage.getItem('videopay_rd');
+        let videos = [];
+        if(data) { try { videos = JSON.parse(data).videos || []; } catch(e) {} }
+        let totalMB = 0;
+        for(let v of videos) totalMB += v.sizeMB;
+        let totalEarn = totalMB * getPlanPrice();
+        document.getElementById('totalBalance').innerText = totalEarn.toFixed(2);
+        if(document.getElementById('videosCount')) {
+            document.getElementById('videosCount').innerText = videos.length;
+            document.getElementById('megasCount').innerText = totalMB.toFixed(1);
+            document.getElementById('earningsCount').innerText = 'RD$' + totalEarn.toFixed(2);
+        }
+    }
+
+    function openWithdraw() {
+        let total = parseFloat(document.getElementById('totalBalance').innerText);
+        if(total >= 1000) alert('✅ Solicitud de retiro procesada.');
+        else alert('❌ Mínimo: RD$1,000 · Tienes RD$ ' + total.toFixed(2));
+    }
+
+    function showInfoModal(page) {
+        const titles = { terms: '📜 Términos', policies: '🔒 Políticas', about: '👥 Sobre Nosotros', share: '📲 Compartir', paypal: '💳 Retiro PayPal' };
+        document.getElementById('infoTitle').innerText = titles[page] || 'Información';
+        document.getElementById('infoContent').innerHTML = infoContents[page];
+        document.getElementById('infoModal').classList.add('active');
+        if(page === 'share') {
+            setTimeout(() => {
+                const copyBtn = document.getElementById('copyLinkBtn');
+                if(copyBtn) copyBtn.onclick = () => { navigator.clipboard.writeText('https://videopayrd.com/app'); alert('Enlace copiado'); };
+            }, 100);
+        }
+    }
+
+    const legalModal = document.getElementById('legalModal');
+    document.getElementById('legalBtn').onclick = () => legalModal.classList.add('active');
+    document.getElementById('closeLegalModal').onclick = () => legalModal.classList.remove('active');
+    document.querySelectorAll('#legalModal .dropdown-item').forEach(btn => {
+        btn.onclick = () => { legalModal.classList.remove('active'); showInfoModal(btn.dataset.page); };
+    });
+
+    document.getElementById('closeInfoModal').onclick = () => document.getElementById('infoModal').classList.remove('active');
+    document.getElementById('closeInfoBtn').onclick = () => document.getElementById('infoModal').classList.remove('active');
+    document.getElementById('withdrawBtn').addEventListener('click', openWithdraw);
+
+    window.addEventListener('storage', () => updateData());
+    updateData();
+
+    legalModal.onclick = (e) => { if(e.target === legalModal) legalModal.classList.remove('active'); };
+    document.getElementById('infoModal').onclick = (e) => { if(e.target === document.getElementById('infoModal')) document.getElementById('infoModal').classList.remove('active'); };
+</script>
+</body>
+</html>
